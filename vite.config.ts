@@ -3,5 +3,17 @@ import vue from '@vitejs/plugin-vue'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue()]
+  plugins: [vue()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3333',
+        changeOrigin: true
+      },
+      '/proxy': {
+        target: 'http://localhost:3333',
+        changeOrigin: true
+      }
+    }
+  }
 })

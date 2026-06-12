@@ -14,9 +14,12 @@ const emit = defineEmits<{
 const { setApiKey: setOpenAIApiKey, setModel: setOpenAIModel, hasApiKey: hasOpenAIKey, isLoading: openAILoading, error: openAIError } = useOpenAI()
 const { setApiKey: setNVIDIAApiKey, setModel: setNVIDIAModel, hasApiKey: hasNVIDIAKey, isLoading: nvidiaLoading, error: nvidiaError } = useNVIDIA()
 
-const selectedProvider = ref<'openai' | 'nvidia'>('nvidia')
+const selectedProvider = ref<'openai' | 'nvidia'>(
+  (import.meta.env.VITE_DEFAULT_PROVIDER as 'openai' | 'nvidia') || 'nvidia'
+)
 const apiKey = ref('')
 const selectedModel = ref('')
+const resetSuccess = ref(false)
 
 const openAIModels = [
   { value: 'gpt-4o', label: 'GPT-4o (Latest, Fast)' },
@@ -54,17 +57,40 @@ watch(selectedProvider, (provider) => {
 })
 
 const handleSave = () => {
-  if (!apiKey.value.trim()) {
-    return
-  }
-  if (selectedProvider.value === 'openai') {
-    setOpenAIApiKey(apiKey.value.trim())
-    setOpenAIModel(selectedModel.value)
+  // If user entered API key, use it; otherwise keep using .env values
+  if (apiKey.value.trim()) {
+    if (selectedProvider.value === 'openai') {
+      setOpenAIApiKey(apiKey.value.trim())
+      setOpenAIModel(selectedModel.value)
+    } else {
+      setNVIDIAApiKey(apiKey.value.trim())
+      setNVIDIAModel(selectedModel.value)
+    }
   } else {
-    setNVIDIAApiKey(apiKey.value.trim())
-    setNVIDIAModel(selectedModel.value)
+    // No API key entered, just save the model selection for current provider
+    if (selectedProvider.value === 'openai') {
+      setOpenAIModel(selectedModel.value)
+    } else {
+      setNVIDIAModel(selectedModel.value)
+    }
   }
   emit('close')
+}
+
+const handleReset = () => {
+  // Reset to .env values
+  if (selectedProvider.value === 'openai') {
+    setOpenAIApiKey(import.meta.env.VITE_OPENAI_API_KEY || '')
+    setOpenAIModel(import.meta.env.VITE_OPENAI_MODEL || 'gpt-3.5-turbo')
+  } else {
+    setNVIDIAApiKey(import.meta.env.VITE_NVIDIA_API_KEY || '')
+    setNVIDIAModel(import.meta.env.VITE_NVIDIA_MODEL || 'minimaxai/minimax-m2.7')
+  }
+  apiKey.value = ''
+  resetSuccess.value = true
+  setTimeout(() => {
+    resetSuccess.value = false
+  }, 3000)
 }
 
 const currentError = () => selectedProvider.value === 'openai' ? openAIError.value : nvidiaError.value
@@ -82,10 +108,15 @@ const currentHasKey = () => selectedProvider.value === 'openai' ? hasOpenAIKey.v
         <h2 class="text-xl font-semibold text-gray-800 mb-4">Cài đặt AI</h2>
 
         <p class="text-sm text-gray-600 mb-4">
-          Chọn provider và nhập API key để kết nối.
+          Nhập API key để ghi đè cài đặt từ .env, hoặc để trống để dùng giá trị mặc định.
         </p>
 
         <div class="space-y-4">
+          <!-- Reset Success -->
+          <div v-if="resetSuccess" class="text-green-600 text-sm flex items-center gap-1 p-2 bg-green-50 rounded-lg">
+            <span>✓</span> Đã reset về .env
+          </div>
+
           <!-- Provider Selection -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Provider</label>
@@ -121,7 +152,7 @@ const currentHasKey = () => selectedProvider.value === 'openai' ? hasOpenAIKey.v
             <input
               v-model="apiKey"
               type="password"
-              :placeholder="selectedProvider === 'nvidia' ? 'nvapi-...' : 'sk-...'"
+              :placeholder="selectedProvider === 'nvidia' ? 'nvapi-... (để trống dùng .env)' : 'sk-... (để trống dùng .env)'"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <p v-if="selectedProvider === 'nvidia'" class="text-xs text-gray-500 mt-1">
@@ -165,8 +196,15 @@ const currentHasKey = () => selectedProvider.value === 'openai' ? hasOpenAIKey.v
             Hủy
           </button>
           <button
+            @click="handleReset"
+            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            title="Reset về .env"
+          >
+            Reset
+          </button>
+          <button
             @click="handleSave"
-            :disabled="!apiKey.trim() || (selectedProvider === 'openai' ? openAILoading : nvidiaLoading)"
+            :disabled="(selectedProvider === 'openai' ? openAILoading : nvidiaLoading)"
             class="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
           >
             {{ (selectedProvider === 'openai' ? openAILoading : nvidiaLoading) ? 'Đang lưu...' : 'Lưu' }}

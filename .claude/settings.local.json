@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npm run *)",
-      "Bash(node check-chat.mjs)"
+      "Bash(node check-chat.mjs)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm build *)"
     ]
   }
 }

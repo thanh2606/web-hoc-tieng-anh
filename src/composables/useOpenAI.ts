@@ -2,8 +2,9 @@ import { ref, computed } from 'vue'
 import type { Message } from '../types'
 
 // OpenAI API configuration
-const OPENAI_API_KEY = ref('')
-const OPENAI_MODEL = ref('gpt-3.5-turbo')
+// Load from environment variables with fallback defaults
+const OPENAI_API_KEY = ref(import.meta.env.VITE_OPENAI_API_KEY || '')
+const OPENAI_MODEL = ref(import.meta.env.VITE_OPENAI_MODEL || 'gpt-3.5-turbo')
 
 export const useOpenAI = () => {
   const isLoading = ref(false)
@@ -29,7 +30,8 @@ export const useOpenAI = () => {
 
     try {
       // Use proxy server to avoid CORS
-      const response = await fetch('http://localhost:3001/proxy/openai', {
+      const proxyPort = import.meta.env.VITE_PROXY_PORT || '3333'
+      const response = await fetch(`http://localhost:${proxyPort}/proxy/openai`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

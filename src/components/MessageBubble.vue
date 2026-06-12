@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
 import type { Message } from '../types'
 
 const props = defineProps<{

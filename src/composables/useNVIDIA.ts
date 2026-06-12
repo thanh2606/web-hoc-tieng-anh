@@ -2,8 +2,9 @@ import { ref, computed } from 'vue'
 import type { Message } from '../types'
 
 // NVIDIA NIM API configuration
-const NVIDIA_API_KEY = ref('')
-const NVIDIA_MODEL = ref('minimaxai/minimax-m2.7')
+// Load from environment variables with fallback defaults
+const NVIDIA_API_KEY = ref(import.meta.env.VITE_NVIDIA_API_KEY || '')
+const NVIDIA_MODEL = ref(import.meta.env.VITE_NVIDIA_MODEL || 'minimaxai/minimax-m2.7')
 
 export const useNVIDIA = () => {
   const isLoading = ref(false)
@@ -29,7 +30,8 @@ export const useNVIDIA = () => {
 
     try {
       // Use proxy server to avoid CORS
-      const response = await fetch('http://localhost:3001/proxy/nvidia', {
+      const proxyPort = import.meta.env.VITE_PROXY_PORT || '3333'
+      const response = await fetch(`http://localhost:${proxyPort}/proxy/nvidia`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
