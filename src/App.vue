@@ -6,6 +6,7 @@ import ConversationList from './components/ConversationList.vue'
 import Header from './components/Header.vue'
 import Sidebar from './components/Sidebar.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
+import VocabularyPanel from './components/VocabularyPanel.vue'
 import { useChatHistory } from './composables/useChatHistory'
 import { useOpenAI, getSimulatedResponse } from './composables/useOpenAI'
 import { useNVIDIA } from './composables/useNVIDIA'
@@ -16,7 +17,7 @@ const { conversations, loadConversations, createConversation, loadMessages, save
 
 const defaultProvider = (import.meta.env.VITE_DEFAULT_PROVIDER || 'nvidia') as 'nvidia' | 'openai'
 
-const activeTab = ref('chat')
+const activeTab = ref<string>('chat')
 const currentConversationId = ref<string | null>(null)
 const messages = ref<Message[]>([])
 const loadingMessages = ref(false)
@@ -146,7 +147,7 @@ const handleSend = async (content: string) => {
 
     <div class="flex flex-col flex-1 min-w-0">
       <Header
-        :title="activeTab === 'chat' ? 'Trò chuyện tiếng Anh' : 'Cài đặt'"
+        :title="activeTab === 'chat' ? 'Trò chuyện tiếng Anh' : activeTab === 'vocabulary' ? 'Từ vựng của tôi' : 'Cài đặt'"
         :show-history="activeTab === 'chat'"
         @new-conversation="handleNewConversation"
       />
@@ -174,6 +175,7 @@ const handleSend = async (content: string) => {
         />
 
         <SettingsPanel v-else-if="activeTab === 'settings'" />
+        <VocabularyPanel v-else-if="activeTab === 'vocabulary'" />
       </div>
     </div>
   </div>

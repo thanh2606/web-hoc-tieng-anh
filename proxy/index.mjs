@@ -60,6 +60,72 @@ app.post('/proxy/openai', async (req, res) => {
   }
 })
 
+// --- Vocabulary API Routes ---
+
+// Get all vocabulary words
+app.get('/api/vocabulary', (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page) || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20))
+    const offset = (page - 1) * limit
+
+    const countResult = db.prepare('SELECT COUNT(*) as total FROM vocabulary').get()
+    const total = countResult?.total || 0
+
+    const rows = db.prepare(
+      'SELECT id, word, meaning, example, note, created_at as createdAt FROM vocabulary ORDER BY created_at DESC LIMIT ? OFFSET ?'
+    ).all(limit, offset)
+
+    res.json({ words: rows, total, page, limit })
+  } catch (error) {
+    console.error('[DB Error]', error)
+    res.status(500).json({ error: 'Failed to fetch vocabulary' })
+  }
+})
+
+// Add a new word
+app.post('/api/vocabulary', (req, res) => {
+  try {
+    const { id, word, meaning, example, note } = req.body
+    if (!id || !word) {
+      return res.status(400).json({ error: 'id and word are required' })
+    }
+    const now = Date.now()
+    db.prepare(
+      'INSERT INTO vocabulary (id, word, meaning, example, note, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+    ).run(id, word, meaning || '', example || '', note || '', now)
+    res.status(201).json({ success: true, id })
+  } catch (error) {
+    console.error('[DB Error]', error)
+    res.status(500).json({ error: 'Failed to add word' })
+  }
+})
+
+// Delete a word
+app.delete('/api/vocabulary/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM vocabulary WHERE id = ?').run(req.params.id)
+    res.json({ success: true })
+  } catch (error) {
+    console.error('[DB Error]', error)
+    res.status(500).json({ error: 'Failed to delete word' })
+  }
+})
+
+// Update a word
+app.put('/api/vocabulary/:id', (req, res) => {
+  try {
+    const { word, meaning, example, note } = req.body
+    db.prepare(
+      'UPDATE vocabulary SET word = ?, meaning = ?, example = ?, note = ? WHERE id = ?'
+    ).run(word, meaning || '', example || '', note || '', req.params.id)
+    res.json({ success: true })
+  } catch (error) {
+    console.error('[DB Error]', error)
+    res.status(500).json({ error: 'Failed to update word' })
+  }
+})
+
 // --- Chat History API Routes ---
 
 // List all conversations (ordered by most recent)

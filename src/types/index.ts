@@ -11,3 +11,21 @@ export interface ChatConversation {
   messages: Message[]
   createdAt: Date
 }
+
+export interface VocabularyWord {
+  id: string
+  word: string
+  meaning: string
+  example: string
+  note: string
+  createdAt: number
+}
+
+export interface SuggestionWord {
+  word: string
+  meanings: string[]
+  example: {
+    en: string
+    vi: string
+  }
+}

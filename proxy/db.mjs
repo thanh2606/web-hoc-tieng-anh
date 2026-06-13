@@ -39,6 +39,15 @@ rawDb.run(`
 
   CREATE INDEX IF NOT EXISTS idx_messages_conv_ts
     ON messages(conversation_id, timestamp);
+
+  CREATE TABLE IF NOT EXISTS vocabulary (
+    id TEXT PRIMARY KEY,
+    word TEXT NOT NULL,
+    meaning TEXT NOT NULL DEFAULT '',
+    example TEXT NOT NULL DEFAULT '',
+    note TEXT NOT NULL DEFAULT '',
+    created_at INTEGER NOT NULL
+  );
 `)
 
 // Save to disk after first init
